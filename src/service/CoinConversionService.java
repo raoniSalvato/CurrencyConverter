@@ -1,63 +1,37 @@
+package service;
+
 import com.google.gson.Gson;
+import conversion.CurrencyConverter;
+import http.HttpClientService;
+import menu.Menu;
+import model.Coin;
 
 public class CoinConversionService {
 
-    private double convertedCoinUSDtoARS;
-    private double convertedCoinARStoUSD;
-    private double convertedCoinUSDtoBRL;
-    private double convertedCoinBRLtoUSD;
-    private double convertedCoinUSDtoCOP;
-    private double convertedCoinCOPtoUSD;
+    private double convertedCoin = 0;
 
-    public double getConvertedCoinUSDtoARS() {
-        return convertedCoinUSDtoARS;
-    }
+    public void getConversions(Menu menu) {
+        try {
+            HttpClientService httpClientService = new HttpClientService();
+            String responseExchangeRate = httpClientService.requestClient();
+            if (responseExchangeRate != null && !responseExchangeRate.isEmpty()) {
 
-    public double getConvertedCoinARStoUSD() {
-        return convertedCoinARStoUSD;
-    }
+                // Usando Gson para converter a resposta da API em um objeto model.Coin
+                Gson gson = new Gson();
+                Coin coin = gson.fromJson(responseExchangeRate, Coin.class);
 
-    public double getConvertedCoinUSDtoBRL() {
-        return convertedCoinUSDtoBRL;
-    }
+                double firstRate = coin.getFirstRate(menu);
+                double segundRate = coin.getSecundRate(menu);
+                double valueToConvert = menu.getValueToConvert();
 
-    public double getConvertedCoinBRLtoUSD() {
-        return convertedCoinBRLtoUSD;
-    }
-
-    public double getConvertedCoinCOPtoUSD() {
-        return convertedCoinCOPtoUSD;
-    }
-
-    public double getConvertedCoinUSDtoCOP() {
-        return convertedCoinUSDtoCOP;
-    }
-
-    public void getConversions() {
-        HttpClientService httpClientService = new HttpClientService();
-        String responseExchangeRate = httpClientService.requestClient();
-        if (responseExchangeRate != null && !responseExchangeRate.isEmpty()) {
-
-            // Usando Gson para converter a resposta da API em um objeto Coin
-            Gson gson = new Gson();
-            Coin coin = gson.fromJson(responseExchangeRate, Coin.class);
-
-            // Definindo os valores de conversão no objeto CoinsRates
-            CoinsRates coinsRates = new CoinsRates();
-            coinsRates.setDollarValue(coin.getDollarValue());
-            coinsRates.setArgentinePesoValue(coin.getArgentinePesoValue());
-            coinsRates.setBrazilianRealValue(coin.getBrazilianRealValue());
-            coinsRates.setColombianPesoValue(coin.getColombianPesoValue());
-
-            // Realizando as conversões
-            convertedCoinUSDtoARS = coinsRates.convertUSDtoARS(coinsRates.getArgentinePesoValue());
-            convertedCoinARStoUSD = coinsRates.convertARStoUSD(coinsRates.getArgentinePesoValue(), coinsRates.getDollarValue());
-            convertedCoinUSDtoBRL = coinsRates.convertUSDtoBRL(coinsRates.getBrazilianRealValue());
-            convertedCoinBRLtoUSD = coinsRates.convertBRLtoUSD(coinsRates.getBrazilianRealValue(), coinsRates.getDollarValue());
-            convertedCoinUSDtoCOP = coinsRates.convertUSDtoCOP(coinsRates.getColombianPesoValue());
-            convertedCoinCOPtoUSD = coinsRates.convertCOPtoUSD(coinsRates.getColombianPesoValue(), coinsRates.getDollarValue());
+                CurrencyConverter currencyConverter = new CurrencyConverter();
+                convertedCoin =  currencyConverter.convert(firstRate, segundRate, valueToConvert);
+            }
+        }catch (RuntimeException e){
+            System.out.println(e.getMessage());
         }
     }
-
-
+    public double getConvertedCoin() {
+        return convertedCoin;
+    }
 }
